@@ -10,3 +10,6 @@ huggingface_hub[hf_xet]
 wikipedia
 wikivoyage
 langchain-text-splitters
+langdetect
+graphviz
+pydot
