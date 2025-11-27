@@ -309,6 +309,55 @@ class RAGAgent:
         
         # Use stream() to get output from each node
         for step in self.app.stream(inputs):
+            # Check for END state transition
+            if END in step:
+                node_name = "END"
+                output = step[END]
+            else:
+                node_name = next(iter(step))
+                output = step[node_name]
+            
+            # Skip printing steps that have no output (like the END transition)
+            if output is None:
+                continue
+
+            # Print state changes for visibility
+            print("-" * 50)
+            print(f"*** STEP: {node_name.upper()} ***")
+            
+            # Safely check for keys in the output dictionary
+            if isinstance(output, dict):
+                if 'question' in output:
+                    print(f"Question: {output['question'][:80]}...")
+                if 'docs' in output:
+                    print(f"Retrieved {len(output['docs'])} chunks.")
+                if 'decision' in output:
+                    print(f"Decision: {output['decision']}")
+                if 'Answer' in output:
+                    # We show the full answer when it's the final output
+                    pass 
+            print("-" * 50)
+            
+            yield node_name, output
+
+        # The final answer is retrieved using invoke after the stream completes
+        # Note: The stream itself doesn't return the final state, so we invoke again 
+        # or use the full state history to get the last state. 
+        # Since you want the final answer, let's keep the final invoke.
+        final_state = self.app.invoke(inputs)
+        return final_state['Answer']
+        """
+        Asks a question and yields the output of each node execution for step-by-step visibility.
+        """
+        inputs = {
+            "question": question,
+            "Answer": "",
+            "docs": [],
+            "historical_questions": []
+        }
+        
+        # Use stream() to get output from each node
+        for step in self.app.stream(inputs):
             node_name = next(iter(step))
             output = step[node_name]
             
